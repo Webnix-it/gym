@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0D0D0D" />
+<title>Smart Workout Tracker</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- SVG sprite (icone vettoriali integrate) -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ic-dumbbell" viewBox="0 0 24 24"><path fill="currentColor" d="M4 8h2v8H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zm14 0h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2V8zM7 9h2v6H7V9zm8 0h2v6h-2V9zm-6 2h6v2H9v-2z"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H6a1 1 0 1 1 0-2h5V6a1 1 0 0 1 1-1z"/></symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3a1 1 0 0 0-1 1v1H5a1 1 0 1 0 0 2h1v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7h1a1 1 0 1 0 0-2h-3V4a1 1 0 0 0-1-1H9zm5 3h-4V4h4v2zm-3 4v6h1v-6h-1zm-2 0v6h1v-6H9zm5 0v6h1v-6h-1z"/></symbol>
+  <symbol id="ic-pencil" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></symbol>
+  <symbol id="ic-skip" viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h2v12H6V6zm3.5 6 8.5 6V6l-8.5 6z"/></symbol>
+  <symbol id="ic-timer" viewBox="0 0 24 24"><path fill="currentColor" d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61 1.42-1.42-2.83-2.83-1.42 1.42A8.96 8.96 0 0 0 12 4a9 9 0 1 0 9 9c0-2.12-.74-4.07-1.97-5.61zM12 20a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></symbol>
+  <symbol id="ic-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7L8 5z"/></symbol>
+  <symbol id="ic-stop" viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h12v12H6V6z"/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24"><path fill="currentColor" d="M5 9h3v11H5V9zm6.5-6h3v17h-3V3zM18 13h3v7h-3v-7z"/></symbol>
+  <symbol id="ic-library" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h4v16H4V4zm6 0h4v16h-4V4zm6.5.5 3.9 15.2-1.9.5-3.9-15.2 1.9-.5z"/></symbol>
+  <symbol id="ic-routines" viewBox="0 0 24 24"><path fill="currentColor" d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm0 2v14h10V5H7zm2 3h6v2H9V8zm0 4h6v2H9v-2z"/></symbol>
+  <symbol id="ic-flame" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.21 4 9.24 4 11.5c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 4.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.55.59 3.85 0 4.42-3.58 8-8 8z"/></symbol>
+  <symbol id="ic-up" viewBox="0 0 24 24"><path fill="currentColor" d="m12 8-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14l-6-6z"/></symbol>
+  <symbol id="ic-down" viewBox="0 0 24 24"><path fill="currentColor" d="m12 10-1.41 1.41L12 12.83l3.41-3.42L16 12l-4 4-4-4 1.41-1.41L12 12.83 13.41 14 12 10z" transform="rotate(180 12 12)"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></symbol>
+</svg>
+
+<div class="app">
+  <!-- ===== Top bar ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-ic"><use href="#ic-dumbbell"/></svg>
+      <span>Smart <b>Workout</b> Tracker</span>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="routines"><svg><use href="#ic-routines"/></svg><span>Schede</span></button>
+      <button class="tab" data-view="library"><svg><use href="#ic-library"/></svg><span>Libreria</span></button>
+      <button class="tab" data-view="dashboard"><svg><use href="#ic-chart"/></svg><span>Dashboard</span></button>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ================= VIEWS ================= -->
+    <section id="view-routines" class="view active"></section>
+    <section id="view-library" class="view"></section>
+    <section id="view-dashboard" class="view"></section>
+  </main>
+
+  <!-- live workout banner -->
+  <div id="liveBanner" class="live-banner hidden">
+    <span class="pulse-dot"></span>
+    <span>Sessione attiva · <b id="liveBannerTime">00:00</b></span>
+    <button class="btn btn-mini" onclick="App.openLive()">Apri Live</button>
+  </div>
+</div>
+
+<!-- Modal container -->
+<div id="modalRoot" class="modal-root hidden">
+  <div class="modal-backdrop" onclick="App.closeModal()"></div>
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

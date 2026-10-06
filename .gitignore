@@ -1,4 +1,9 @@
-node_modules/
+# Debug and temporary output files
+dbg.js
+dbg2.js
+out.txt
+out2.txt
+tout.txtnode_modules/
 .next/
 dist/
 build/
