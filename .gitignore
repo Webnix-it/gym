@@ -8,3 +8,4 @@ tout.txtnode_modules/
 dist/
 build/
 *.log
+node_modules/
