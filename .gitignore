@@ -1,7 +1,5 @@
-# Compiled/Binary files
-*.outnode_modules/
+(empty)node_modules/
 .next/
 dist/
 build/
 *.log
-node_modules/

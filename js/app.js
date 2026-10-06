@@ -45,10 +45,10 @@
      #main e invochiamo App[fn](el, ...args), passando l'elemento cliccato come primo argomento.
      Le funzioni che ricevono un elemento usano data-uid / data-rid come identificatori canonici. */
   function setupDelegation(){
-    const main = $("#main");
-    if(!main || main._delegated) return;
-    main._delegated = true;
-    main.addEventListener("click", ev => {
+    // delega su document: copre #main, modali (#modalRoot), toast e banner live
+    if(document.body && document.body._delegated) return;
+    if(document.body) document.body._delegated = true;
+    document.addEventListener("click", ev => {
       const el = ev.target.closest("[onclick]");
       if(!el) return;
       const m = String(el.getAttribute("onclick")).match(/App\.(\w+)\(([^)]*)\)/);
@@ -61,11 +61,13 @@
       while((mm = re.exec(m[2])) !== null){
         args.push(mm[1] !== undefined ? mm[1] : (mm[2] !== undefined ? mm[2] : Number(mm[3])));
       }
-      // se sia la delega sia l'handler inline vengono entrambi eseguiti (browser reali),
-      // evita il doppio intervento sulla stessa interazione
-      if(el._swtHandled === ev.timeStamp) return;
-      el._swtHandled = ev.timeStamp;
-      fn.apply(App, [el].concat(args));
+      // Anti doppio-intervento: nei browser reali inline + delega eseguirebbero App[fn] due volte.
+      // Marker messo su window con riferimento all'evento: solo il primo invocatore procede.
+      const mark = "__swt_" + (ev.timeStamp || 0);
+      if(window[mark] === ev){ return; }
+      window[mark] = ev;
+      try { fn.apply(App, [el].concat(args)); }
+      finally { if(window[mark] === ev) delete window[mark]; }
     });
   }
 
@@ -420,7 +422,9 @@
     clearInterval(ui.tick);
     ui.tick = setInterval(()=>{
       const s = S.getSession();
-      if(!s) return;
+      if(!s){ // nessuna sessione attiva: niente lavoro, stop del ticker (evita loop inutili)
+        clearInterval(ui.tick); ui.tick=null; return;
+      }
       if(ui.view==="routines" && $("#liveClock")){
         $("#liveClock").textContent = fmtDur(Date.now()-s.startTs);
         // rest timer
@@ -472,7 +476,7 @@
     },
     backToRoutines(){ ui.openRoutineId=null; render(); },
     newRoutine(){ newRoutineModal(); },
-    createRoutineFromModal(){
+    createRoutineFromModal(el){
       const n = $("#m-rname").value.trim();
       const r = S.createRoutine(n || "Nuova Scheda");
       closeModal(); ui.openRoutineId = r.id; render(); toast("Scheda creata 💪");
@@ -481,8 +485,9 @@
       if(id && typeof id === "object" && id.getAttribute) id = id.getAttribute("data-rid") || id.dataset.rid;
       renameModal(id);
     },
-    renameFromModal(id){
-      if(id && typeof id === "object" && id.getAttribute) id = id.getAttribute("data-rid") || id.dataset.rid;
+    renameFromModal(a, b){
+      // chiamato da inline (id stringa) o da delega (el, id): l'id valido e' sempre l'ultimo argomento stringa
+      const id = (typeof b === "string") ? b : (typeof a === "string" ? a : null);
       const n = $("#m-rrename").value.trim();
       if(n) S.renameRoutine(id,n);
       closeModal(); render(); toast(" rinominata ✔");
@@ -520,8 +525,10 @@
         <button class="icon-btn danger" onclick="this.closest('[data-setrow]').remove()"><svg><use href="#ic-trash"/></svg></button>`;
       $("#m-sets").appendChild(div);
     },
-    saveSets(rid,uid_){
-      if(rid && typeof rid === "object" && rid.getAttribute){ uid_ = rid.getAttribute("data-uid") || uid_; rid = rid.getAttribute("data-rid"); }
+    saveSets(a, b){
+      // chiamato da inline (rid, uid) o da delega (el, rid, uid): gli id sono gli argomenti stringa, in ordine
+      const strs = [a,b].filter(x=>typeof x==="string");
+      const rid = strs[0], uid_ = strs[1];
       const rows=$$("#m-sets [data-setrow]");
       const sets=rows.map(row=>{
         const g=f=>parseFloat(row.querySelector(`[data-f="${f}"]`).value)||0;
@@ -552,8 +559,9 @@
       if(rid && typeof rid === "object" && rid.getAttribute) rid = rid.getAttribute("data-rid") || rid.dataset.rid || null;
       customExerciseModal(rid);
     },
-    saveCustomExercise(rid){
-      if(rid && typeof rid === "object" && rid.getAttribute) rid = rid.getAttribute("data-rid") || rid.dataset.rid || null;
+    saveCustomExercise(a){
+      // chiamato da inline (rid stringa o null) o da delega (el, rid): usa l'eventuale argomento stringa
+      const rid = (typeof a === "string") ? a : null;
       const name=$("#m-ce-name").value.trim();
       if(!name){ toast("Inserisci un nome"); return; }
       const muscle=$("#m-ce-muscle").value, demo=$("#m-ce-demo").value;
@@ -576,7 +584,7 @@
       const r=S.getRoutine(rid);
       if(!r || !r.exercises.length){ toast("Aggiungi esercizi alla scheda prima di iniziare"); return; }
       S.startSession(rid);
-      ui.openRoutineId=rid; switchView("routines"); render();
+      ui.openRoutineId=rid; switchView("routines"); render(); startTicker();
       toast("🔥 Sessione avviata: "+fmtTime(Date.now()));
     },
     openLive(){ ui.openRoutineId = S.getSession()?.routineId || null; switchView("routines"); render(); },
@@ -597,7 +605,8 @@
     },
     clearRest(){ S.setRest(null); render(); },
     finishWorkout(){ manualTimesModal(); },
-    confirmManualEnd(){
+    confirmManualEnd(el){
+      // accetta sia chiamata inline (nessun arg) sia da delega (elemento cliccato)
       const s=S.getSession(); if(!s) return;
       const sv=$("#m-start").value, ev=$("#m-end").value;
       let st = sv? new Date(sv).getTime(): s.startTs;
