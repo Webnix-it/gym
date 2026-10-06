@@ -1,6 +1,6 @@
-(empty)node_modules/
-.next/
-dist/
-build/
-*.log
+# Dependencies
 node_modules/
+
+# Build artifacts and temporary files
+*.out
+*.tmp

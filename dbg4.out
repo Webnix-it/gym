@@ -1,4 +1,0 @@
-MEM uid0: ex_mux385x6mmug0
-LS  uid0: ex_mux385x6mmug0
-BTN data-uid: ex_mux385x6mmug0 onclick: App.setStatus(this,'ex_mux385x6mmug0','done')
-items: {}
