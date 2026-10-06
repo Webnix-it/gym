@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Workout Tracker 💪</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ===== Sprite SVG (icone) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="ic-dumbbell" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M2 12h2m16 0h2M6 8v8M18 8v8M6 10h12M4 9v6m16-6v6"/></symbol>
+    <symbol id="ic-library" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 5h4v15H4zM10 5h4v15h-4zM17 6l3-.7 3 14.4-3 .7z" transform="scale(.85) translate(1 1)"/></symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="ic-trash" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></symbol>
+    <symbol id="ic-pencil" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 20l1-4L16 5l3 3L8 19l-4 1zM14 7l3 3"/></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M4 12l5 5L20 6"/></symbol>
+    <symbol id="ic-skip" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l8 6-8 6zM18 5v14"/></symbol>
+    <symbol id="ic-play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4l13 8-13 8z"/></symbol>
+    <symbol id="ic-stop" viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h12v12H6z"/></symbol>
+    <symbol id="ic-timer" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 22a8 8 0 100-16 8 8 0 000 16zM12 10v4l3 2M9 2h6"/></symbol>
+    <symbol id="ic-flame" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2c1 4-4 5.5-4 10a4.5 4.5 0 004 4.9c.2-1.6-.8-2.4-.3-4.4C13 15 16 15.5 16 12c0-4-3-6-4-10z"/><path fill="currentColor" d="M12 22a6.8 6.8 0 01-6.8-6.8C5.2 11 8 9 9 6c.5 2 2 3 3.4 4.6 1.2 1.4 3.4 2.6 3.4 4.6A6.8 6.8 0 0112 22z" opacity=".35"/></symbol>
+    <symbol id="ic-routines" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="ic-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="ic-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 19V5M5 12l7-7 7 7"/></symbol>
+    <symbol id="ic-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 5v14M5 12l7 7 7-7"/></symbol>
+    <symbol id="ic-body" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.6" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 8v7M12 15l-3 6M12 15l3 6M6 10l6 1.5L18 10"/></symbol>
+    <symbol id="ic-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M7 5h4v14H7zM13 5h4v14h-4z"/></symbol>
+    <symbol id="ic-eye" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="ic-link" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M9 15l6-6M11 5l2-2a4 4 0 016 6l-2 2M13 19l-2 2a4 4 0 01-6-6l2-2"/></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-ic"><svg><use href="#ic-dumbbell"/></svg></span>
+      <span><b>Smart</b>Workout Tracker</span>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="routines"><svg><use href="#ic-routines"/></svg><span>Schede</span></button>
+      <button class="tab" data-view="library"><svg><use href="#ic-library"/></svg><span>Libreria</span></button>
+      <button class="tab" data-view="dashboard"><svg><use href="#ic-chart"/></svg><span>Dashboard</span></button>
+    </nav>
+  </header>
+
+  <!-- Viste -->
+  <main>
+    <section class="view active" id="view-routines"></section>
+    <section class="view" id="view-library"></section>
+    <section class="view" id="view-dashboard"></section>
+  </main>
+
+  <footer class="foot">
+    <span>Dati salvati in LocalStorage · offline-first · animazioni open-source SVG</span>
+    <button class="link-btn" onclick="App.resetAll()">Reset dati</button>
+  </footer>
+</div>
+
+<!-- Banner sessione live -->
+<div class="live-banner hidden" id="liveBanner"><span class="lb-inner" onclick="App.openLive()" style="cursor:pointer;display:flex;align-items:center;gap:8px">
+  <span class="pulse-dot"></span> Sessione attiva · <b id="liveBannerTime">00:00</b></span>
+</div>
+
+<!-- Modale -->
+<div class="modal-root hidden" id="modalRoot">
+  <div class="modal-backdrop" onclick="App.closeModal()"></div>
+  <div class="modal-card" id="modalCard"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="js/anim.js"></script>
+<script src="js/data.js"></script>
+<script src="js/store.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
