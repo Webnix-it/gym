@@ -1,0 +1,13 @@
+const fs=require("fs"),{JSDOM}=require("jsdom");
+const dom=new JSDOM("<!doctype html><html><body></body></html>",{url:"http://localhost/"});
+const w=dom.window;
+w.eval(fs.readFileSync("js/data.js","utf8"));
+w.eval(fs.readFileSync("js/store.js","utf8"));
+w.document.dispatchEvent(new w.Event("DOMContentLoaded"));
+const S=w.SWT_STORE;
+S.load();
+const r=S.getRoutine("day1");
+console.log("ex0 keys:", Object.keys(r.exercises[0]));
+console.log("ex0.uid:", r.exercises[0].uid);
+console.log("raw storage ex0:", JSON.stringify(JSON.parse(w.localStorage.getItem("swt_state_v1")).routines[0].exercises[0]).slice(0,150));
+process.exit(0);

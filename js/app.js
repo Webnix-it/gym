@@ -40,6 +40,35 @@
     render();
   }
 
+  /* ---------- delega eventi (robusta anche dove gli handler inline non vengono eseguiti) ----------
+     Gli attributi onclick restano per i browser reali; qui intercettiamo il click sul container
+     #main e invochiamo App[fn](el, ...args), passando l'elemento cliccato come primo argomento.
+     Le funzioni che ricevono un elemento usano data-uid / data-rid come identificatori canonici. */
+  function setupDelegation(){
+    const main = $("#main");
+    if(!main || main._delegated) return;
+    main._delegated = true;
+    main.addEventListener("click", ev => {
+      const el = ev.target.closest("[onclick]");
+      if(!el) return;
+      const m = String(el.getAttribute("onclick")).match(/App\.(\w+)\(([^)]*)\)/);
+      if(!m) return;
+      const fn = App[m[1]];
+      if(typeof fn !== "function") return;
+      const args = [];
+      const re = /'([^']*)'|"([^"]*)"|(-?\d+(?:\.\d+)?)/g;
+      let mm;
+      while((mm = re.exec(m[2])) !== null){
+        args.push(mm[1] !== undefined ? mm[1] : (mm[2] !== undefined ? mm[2] : Number(mm[3])));
+      }
+      // se sia la delega sia l'handler inline vengono entrambi eseguiti (browser reali),
+      // evita il doppio intervento sulla stessa interazione
+      if(el._swtHandled === ev.timeStamp) return;
+      el._swtHandled = ev.timeStamp;
+      fn.apply(App, [el].concat(args));
+    });
+  }
+
   /* ================= RENDER ================= */
   function render(){
     if(ui.view==="routines"){
@@ -71,7 +100,7 @@
       html += `<div class="routine-grid" style="margin-top:16px">` + rts.map(r=>{
         const vol = r.exercises.reduce((v,e)=>v+S.exerciseVolume(e),0);
         const kcal = r.exercises.reduce((c,e)=>c+S.estimateCalories(e),0);
-        return `<div class="routine-card" onclick="App.openRoutine('${r.id}')">
+        return `<div class="routine-card" data-rid="${r.id}" onclick="App.openRoutine('${r.id}')">
           <div class="routine-name">${esc(r.name)}</div>
           <div class="muted small">${r.exercises.length} esercizi</div>
           <div class="routine-meta">
@@ -79,10 +108,10 @@
             <span class="chip">${vol.toLocaleString("it-IT")} kg volume</span>
           </div>
           <div class="row" style="margin-top:12px">
-            <button class="btn btn-mini btn-primary" onclick="event.stopPropagation();App.startWorkout('${r.id}')"><svg style="width:14px;height:14px"><use href="#ic-play"/></svg>Avvia</button>
+            <button class="btn btn-mini btn-primary" data-rid="${r.id}" onclick="App.startWorkout('${r.id}')"><svg style="width:14px;height:14px"><use href="#ic-play"/></svg>Avvia</button>
             <span class="spacer"></span>
-            ${iconBtn("pencil","Rinomina","",`onclick="event.stopPropagation();App.renameRoutine('${r.id}')"`)}
-            ${iconBtn("trash","Elimina","danger",`onclick="event.stopPropagation();App.deleteRoutine('${r.id}')"`)}
+            ${iconBtn("pencil","Rinomina","",`data-rid="${r.id}" onclick="App.renameRoutine('${r.id}')"`)}
+            ${iconBtn("trash","Elimina","danger",`data-rid="${r.id}" onclick="App.deleteRoutine('${r.id}')"`)}
           </div>
         </div>`;
       }).join("") + `</div>`;
@@ -95,8 +124,8 @@
       <div class="row" style="margin-top:18px">
         <button class="btn btn-mini" onclick="App.backToRoutines()">← Indietro</button>
         <span class="spacer"></span>
-        <button class="btn btn-mini" onclick="App.renameRoutine('${r.id}')"><svg style="width:14px;height:14px"><use href="#ic-pencil"/></svg>Rinomina</button>
-        <button class="btn btn-mini btn-primary" onclick="App.startWorkout('${r.id}')"><svg style="width:14px;height:14px"><use href="#ic-play"/></svg>Avvia allenamento</button>
+        <button class="btn btn-mini" data-rid="${r.id}" onclick="App.renameRoutine('${r.id}')"><svg style="width:14px;height:14px"><use href="#ic-pencil"/></svg>Rinomina</button>
+        <button class="btn btn-mini btn-primary" data-rid="${r.id}" onclick="App.startWorkout('${r.id}')"><svg style="width:14px;height:14px"><use href="#ic-play"/></svg>Avvia allenamento</button>
       </div>
       <h2 class="section-title" style="margin-top:14px"><svg><use href="#ic-dumbbell"/></svg>${esc(r.name)}</h2>`;
 
@@ -105,7 +134,7 @@
         <p>Scheda vuota. Aggiungi esercizi dalla <b>Libreria</b> o creane uno personalizzato.</p>
         <div class="row" style="justify-content:center;margin-top:12px">
           <button class="btn btn-primary" onclick="App.gotoLibrary()"><svg><use href="#ic-library"/></svg>Vai alla libreria</button>
-          <button class="btn" onclick="App.customExerciseModal('${r.id}')"><svg><use href="#ic-plus"/></svg>Esercizio personalizzato</button>
+          <button class="btn" data-rid="${r.id}" onclick="App.customExerciseModal('${r.id}')"><svg><use href="#ic-plus"/></svg>Esercizio personalizzato</button>
         </div></div>`;
       return html;
     }
@@ -118,17 +147,17 @@
           <div class="ex-sub">${muscleLabel(e.muscle)} · ${pills}</div>
         </div>
         <div class="row" style="gap:4px">
-          <button class="btn btn-mini" onclick="App.editSetsModal('${r.id}','${e.uid}')">Set/Reps/Kg</button>
-          ${iconBtn("up","Sposta su","",`onclick="App.moveEx('${r.id}','${e.uid}',-1)"`)}
-          ${i<r.exercises.length-1?iconBtn("down","Sposta giù","",`onclick="App.moveEx('${r.id}','${e.uid}',1)`):""}
-          ${iconBtn("trash","Rimuovi","danger",`onclick="App.removeEx('${r.id}','${e.uid}')"`)}
+          <button class="btn btn-mini" data-rid="${r.id}" data-uid="${e.uid}" onclick="App.editSetsModal('${r.id}','${e.uid}')">Set/Reps/Kg</button>
+          ${iconBtn("up","Sposta su","",`data-rid="${r.id}" data-uid="${e.uid}" onclick="App.moveEx('${r.id}','${e.uid}',-1)"`)}
+          ${i<r.exercises.length-1?iconBtn("down","Sposta giù","",`data-rid="${r.id}" data-uid="${e.uid}" onclick="App.moveEx('${r.id}','${e.uid}',1)`):""}
+          ${iconBtn("trash","Rimuovi","danger",`data-rid="${r.id}" data-uid="${e.uid}" onclick="App.removeEx('${r.id}','${e.uid}')"`)}
         </div>
       </div>`;
     }).join("");
 
     html += `<div class="row" style="margin-top:14px">
       <button class="btn" onclick="App.gotoLibrary()"><svg><use href="#ic-plus"/></svg>Aggiungi dalla libreria</button>
-      <button class="btn" onclick="App.customExerciseModal('${r.id}')"><svg><use href="#ic-plus"/></svg>Esercizio personalizzato</button>
+      <button class="btn" data-rid="${r.id}" onclick="App.customExerciseModal('${r.id}')"><svg><use href="#ic-plus"/></svg>Esercizio personalizzato</button>
     </div>`;
     return html;
   }
@@ -160,7 +189,7 @@
             <div class="small muted" style="margin-top:3px">Primario: <b style="color:var(--accent)">${muscleLabel(e.primary)}</b>
               ${e.secondary?`· Secondario: ${muscleLabel(e.secondary)}`:""}</div>
           </div>
-          <button class="btn btn-mini btn-primary" ${active?`onclick="App.quickAdd('${e.id}')"`:`disabled style="opacity:.4;cursor:not-allowed"`}>
+          <button class="btn btn-mini btn-primary" data-lid="${e.id}" ${active?`onclick="App.quickAdd('${e.id}')"`:`disabled style="opacity:.4;cursor:not-allowed"`}>
             <svg style="width:14px;height:14px"><use href="#ic-plus"/></svg>Aggiungi a ${active?esc(active.name):"scheda"}
           </button>
         </div>`).join("") + `</div>`;
@@ -320,7 +349,7 @@
       <div class="modal-head"><span class="modal-title">Rinomina scheda</span>${iconBtn("x","Chiudi","",`onclick="App.closeModal()"`)}</div>
       <div class="field"><label>Nuovo nome</label>
         <input id="m-rrename" value="${esc(r.name)}" maxlength="60"/></div>
-      <button class="btn btn-primary" style="width:100%" onclick="App.renameFromModal('${id}')">Salva</button>`);
+      <button class="btn btn-primary" style="width:100%" data-rid="${id}" onclick="App.renameFromModal('${id}')">Salva</button>`);
     setTimeout(()=>{const i=$("#m-rrename");i.focus();i.select();},50);
   }
 
@@ -338,7 +367,7 @@
       <div class="small muted" style="margin-bottom:10px">Configura Serie × Ripetizioni × Carico (Kg).</div>
       <div id="m-sets">${rowsOf(e.sets)}</div>
       <button class="btn btn-mini" onclick="App.addSetRow()"><svg style="width:14px;height:14px"><use href="#ic-plus"/></svg>Aggiungi riga serie</button>
-      <button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="App.saveSets('${routineId}','${exUid}')">Salva</button>`);
+      <button class="btn btn-primary" style="width:100%;margin-top:14px" data-rid="${routineId}" data-uid="${exUid}" onclick="App.saveSets('${routineId}','${exUid}')">Salva</button>`);
   }
 
   function customExerciseModal(routineId){
@@ -354,7 +383,7 @@
         <div class="field" style="flex:1"><label>Reps</label><input id="m-ce-reps" type="number" min="1" value="10"></div>
         <div class="field" style="flex:1"><label>Kg</label><input id="m-ce-kg" type="number" min="0" step="0.5" value="0"></div>
       </div>
-      <button class="btn btn-primary" style="width:100%" onclick="App.saveCustomExercise(${routineId?`'${routineId}'`:"null"})">Salva${routineId?" e aggiungi alla scheda":""}</button>`);
+      <button class="btn btn-primary" style="width:100%" data-rid="${routineId||''}" onclick="App.saveCustomExercise(${routineId?`'${routineId}'`:"null"})">Salva${routineId?" e aggiungi alla scheda":""}</button>`);
     setTimeout(()=>$("#m-ce-name").focus(),50);
   }
 
@@ -423,6 +452,7 @@
   const App = {
     init(){
       S.load();
+      setupDelegation();
       $("#tabs").addEventListener("click", ev=>{
         const b = ev.target.closest(".tab"); if(b) switchView(b.dataset.view);
       });
@@ -434,7 +464,12 @@
     gotoDashboard(){ switchView("dashboard"); },
 
     /* routines */
-    openRoutine(id){ ui.openRoutineId=id; switchView("routines"); },
+    openRoutine(id){
+      // se chiamato da delega, il primo argomento è la card cliccata: usa data-rid corrente
+      if(id && typeof id === "object" && id.getAttribute) id = id.getAttribute("data-rid") || id.dataset.rid || null;
+      if(!id){ render(); return; }
+      ui.openRoutineId=id; switchView("routines");
+    },
     backToRoutines(){ ui.openRoutineId=null; render(); },
     newRoutine(){ newRoutineModal(); },
     createRoutineFromModal(){
@@ -442,21 +477,39 @@
       const r = S.createRoutine(n || "Nuova Scheda");
       closeModal(); ui.openRoutineId = r.id; render(); toast("Scheda creata 💪");
     },
-    renameRoutine(id){ renameModal(id); },
+    renameRoutine(id){
+      if(id && typeof id === "object" && id.getAttribute) id = id.getAttribute("data-rid") || id.dataset.rid;
+      renameModal(id);
+    },
     renameFromModal(id){
+      if(id && typeof id === "object" && id.getAttribute) id = id.getAttribute("data-rid") || id.dataset.rid;
       const n = $("#m-rrename").value.trim();
       if(n) S.renameRoutine(id,n);
       closeModal(); render(); toast(" rinominata ✔");
     },
     deleteRoutine(id){
+      if(id && typeof id === "object" && id.getAttribute) id = id.getAttribute("data-rid") || id.dataset.rid;
       const r=S.getRoutine(id);
       if(r && confirm(`Eliminare la scheda "${r.name}"?`)){
         S.deleteRoutine(id); ui.openRoutineId=null; render(); toast("Scheda eliminata");
       }
     },
-    moveEx(rid,uid_,dir){ S.moveExercise(rid,uid_,dir); render(); },
-    removeEx(rid,uid_){ S.removeExercise(rid,uid_); render(); },
-    editSetsModal(rid,uid_){ setsModal(rid,uid_); },
+    moveEx(rid,uid_,dir){
+      // firma via delega: (el, uid, dir) — rid recuperata dall'attributo data-rid
+      if(rid && typeof rid === "object" && rid.getAttribute){ dir = uid_; uid_ = rid; rid = rid.getAttribute("data-rid"); }
+      if(typeof uid_ === "object" && uid_.getAttribute) uid_ = uid_.getAttribute("data-uid") || uid_.dataset.uid;
+      S.moveExercise(rid,uid_,dir); render();
+    },
+    removeEx(rid,uid_){
+      if(rid && typeof rid === "object" && rid.getAttribute){ uid_ = rid; rid = rid.getAttribute("data-rid"); }
+      if(uid_ && typeof uid_ === "object" && uid_.getAttribute) uid_ = uid_.getAttribute("data-uid") || uid_.dataset.uid;
+      S.removeExercise(rid,uid_); render();
+    },
+    editSetsModal(rid,uid_){
+      if(rid && typeof rid === "object" && rid.getAttribute){ uid_ = rid; rid = rid.getAttribute("data-rid"); }
+      if(uid_ && typeof uid_ === "object" && uid_.getAttribute) uid_ = uid_.getAttribute("data-uid") || uid_.dataset.uid;
+      setsModal(rid,uid_);
+    },
     addSetRow(){
       const div=document.createElement("div");
       div.setAttribute("data-setrow","");
@@ -468,6 +521,7 @@
       $("#m-sets").appendChild(div);
     },
     saveSets(rid,uid_){
+      if(rid && typeof rid === "object" && rid.getAttribute){ uid_ = rid.getAttribute("data-uid") || uid_; rid = rid.getAttribute("data-rid"); }
       const rows=$$("#m-sets [data-setrow]");
       const sets=rows.map(row=>{
         const g=f=>parseFloat(row.querySelector(`[data-f="${f}"]`).value)||0;
@@ -480,6 +534,7 @@
     /* libreria */
     filterLib(k){ ui.libFilter=k; render(); },
     quickAdd(libId){
+      if(libId && typeof libId === "object" && libId.getAttribute) libId = libId.getAttribute("data-lid") || libId;
       const target = S.getRoutine(ui.openRoutineId);
       if(!target){ toast("Apri prima una scheda!"); return; }
       const lib = S.allLibraryExercises().find(e=>e.id===libId); if(!lib) return;
@@ -493,8 +548,12 @@
       const el = document.getElementById("item-"+item.uid);
       if(el){ el.classList.add("added-flash"); el.scrollIntoView({behavior:"smooth",block:"center"}); }
     },
-    customExerciseModal(rid){ customExerciseModal(rid); },
+    customExerciseModal(rid){
+      if(rid && typeof rid === "object" && rid.getAttribute) rid = rid.getAttribute("data-rid") || rid.dataset.rid || null;
+      customExerciseModal(rid);
+    },
     saveCustomExercise(rid){
+      if(rid && typeof rid === "object" && rid.getAttribute) rid = rid.getAttribute("data-rid") || rid.dataset.rid || null;
       const name=$("#m-ce-name").value.trim();
       if(!name){ toast("Inserisci un nome"); return; }
       const muscle=$("#m-ce-muscle").value, demo=$("#m-ce-demo").value;
@@ -512,9 +571,10 @@
 
     /* live workout */
     startWorkout(rid){
+      if(rid && typeof rid === "object" && rid.getAttribute) rid = rid.getAttribute("data-rid") || rid.dataset.rid;
       if(S.getSession()){ toast("C'è già una sessione attiva!"); this.openLive(); return; }
       const r=S.getRoutine(rid);
-      if(!r.exercises.length){ toast("Aggiungi esercizi alla scheda prima di iniziare"); return; }
+      if(!r || !r.exercises.length){ toast("Aggiungi esercizi alla scheda prima di iniziare"); return; }
       S.startSession(rid);
       ui.openRoutineId=rid; switchView("routines"); render();
       toast("🔥 Sessione avviata: "+fmtTime(Date.now()));
